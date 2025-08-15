@@ -2,6 +2,7 @@ interface PokemonThumbnailProps {
     name: string;
     id: number;
     imageUrl?: string;
+    isLoading: boolean;
 }
 
 function CompleteId (id: number): string {

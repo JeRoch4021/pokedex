@@ -33,7 +33,6 @@ import { useGetPokemonList } from "./useGetPokemonList";
 
 export const PokemonList = () => {
   const [searchPokemon, setSearchPokemon] = useState("");
-  const [pokemon, setPokemon] = useState([]);
 
   // Filtrar los elementos del array antes de renderizar.
   // const filterPokemons = pokemons.filter((pokemon) =>
@@ -45,8 +44,9 @@ export const PokemonList = () => {
     setSearchPokemon(e.target.value)
   }
 
-  const { data } = useGetPokemonList();
-  console.log(data)
+  const { data: pokemons } = useGetPokemonList();
+
+  const pokemonNames: Array<string> = pokemons ? pokemons.map(pokemon => pokemon.name) : []
 
   return (
     <div className="flex flex-col h-full bg-red-600">
@@ -65,16 +65,54 @@ export const PokemonList = () => {
       </div>
       <div className="grow bg-white m-2 p-2 rounded-sm overflow-y-auto">
         <div className="grid grid-cols-3 gap-4 p-4 ">
-            {/* {filterPokemons.map(({ id, name }, index) => {
-              const formatId = id.toString().padStart(3, "0");
-              const imageURL = `https://assets.pokemon.com/assets/cms2/img/pokedex/detail/${formatId}.png`
-
-              return (<PokemonThumbnail key={index} id={id} name={name} imageUrl={imageURL}/>);
-
-            })} */}
-            
+          {pokemons?.map((pokemon, index) => (
+              <PokemonThumbnail key={index} id={1} name={pokemon.name} imageUrl="https://assets.pokemon.com/assets/cms2/img/pokedex/detail/1.png"/>
+          ))}           
         </div>
       </div>
     </div>
   );
 };
+
+
+/*
+import { useQueries } from '@tanstack/react-query';
+
+// An async function to fetch a single user
+const fetchUser = async (userId) => {
+  const res = await fetch(`https://jsonplaceholder.typicode.com/users/${userId}`);
+  if (!res.ok) {
+    throw new Error('Network response was not ok');
+  }
+  return res.json();
+};
+
+function UserList({ userIds }) { // e.g., userIds = [1, 2, 3]
+  const userQueries = useQueries({
+    queries: userIds.map((id) => {
+      return {
+        queryKey: ['user', id], // Unique key for each query
+        queryFn: () => fetchUser(id),
+      };
+    }),
+  });
+
+  return (
+    <div>
+      <h2>User List</h2>
+      <ul>
+        {userQueries.map(({ data, isLoading, isError }, index) => {
+          if (isLoading) {
+            return <li key={userIds[index]}>Loading user {userIds[index]}...</li>;
+          }
+          if (isError) {
+            return <li key={userIds[index]}>Error fetching user {userIds[index]}!</li>;
+          }
+          return <li key={data.id}>{data.name} ({data.email})</li>;
+        })}
+      </ul>
+    </div>
+  );
+}
+*/
+

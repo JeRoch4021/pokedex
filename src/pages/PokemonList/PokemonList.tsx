@@ -6,6 +6,7 @@ import { AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { Search } from "lucide-react";
 import  { useState } from "react";
 import { useGetPokemonList } from "./useGetPokemonList";
+import { useQueries } from '@tanstack/react-query';
 
 // const pokemons = [
 //   { name: "Bulbasaur", id: 1 },
@@ -33,20 +34,35 @@ import { useGetPokemonList } from "./useGetPokemonList";
 
 export const PokemonList = () => {
   const [searchPokemon, setSearchPokemon] = useState("");
+  const { data: pokemons } = useGetPokemonList();
+  const pokemonNames: Array<string> = pokemons?.map((pokemon) => pokemon.name)?? [];
+
+  const fetchPokemon = async (name: string) => {
+    const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${name}`)
+    if (!response.ok){
+      throw new Error('La red no responde, hay una falla');
+    }
+    return response.json();
+  };
+
+  const pokemonQueries = useQueries({
+    queries: pokemonNames.map((name) => {
+      return {
+        queryKey: ['pokemon', name], // Unique key for each query
+        queryFn: () => fetchPokemon(name),
+      };
+    })
+  });
 
   // Filtrar los elementos del array antes de renderizar.
-  // const filterPokemons = pokemons.filter((pokemon) =>
-  //   pokemon.name.toLowerCase().includes(searchPokemon.toLowerCase())
-  // );
+  const filterPokemons = pokemonQueries.filter(
+      ( {data} ) => data && (data.name.toLowerCase().includes(searchPokemon.toLowerCase())) 
+    );
 
   // Capturar los valores que el usuario va ingresando en input.
   const searcher = (e: any) => {
     setSearchPokemon(e.target.value)
-  }
-
-  const { data: pokemons } = useGetPokemonList();
-
-  const pokemonNames: Array<string> = pokemons ? pokemons.map(pokemon => pokemon.name) : []
+  };
 
   return (
     <div className="flex flex-col h-full bg-red-600">
@@ -65,9 +81,16 @@ export const PokemonList = () => {
       </div>
       <div className="grow bg-white m-2 p-2 rounded-sm overflow-y-auto">
         <div className="grid grid-cols-3 gap-4 p-4 ">
-          {pokemons?.map((pokemon, index) => (
-              <PokemonThumbnail key={index} id={1} name={pokemon.name} imageUrl="https://assets.pokemon.com/assets/cms2/img/pokedex/detail/1.png"/>
-          ))}           
+          {filterPokemons.map(({data, isLoading, isError}, index) => {
+            if (isLoading) {
+              return <div key={index}>Cargando...</div>;
+            }
+            if (isError) {
+              return <div key={index}>Error al llamar Pokemon</div>
+            }
+            // imageURL={data.sprites.front_default}
+            return (<PokemonThumbnail key={index} id={data?.id ?? index} name={data?.name ?? "Cargando..."} imageUrl={data.sprites.front_default} isLoading={isLoading}/>);
+          })}         
         </div>
       </div>
     </div>
